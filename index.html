@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>synclist</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style type="text/css">
+    .item {
+      position: relative;
+      margin-right: 10px;
+      min-height: 30px;
+    }
+    .item pre {
+      position: absolute;
+      left: 200px;
+      top: 0;
+      white-space: normal;
+    }
+    .list-enter-active {
+      transition: opacity .5s .5s, margin .5s;
+    }
+    .list-leave-active {
+      transition: opacity .5s, margin .5s .5s;
+    }
+    .list-enter, .list-leave-to {
+      opacity: 0;
+      margin: -15px 0; 
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="items">
+      <transition-group name="list">
+        <div class="item" v-for="(item, i) in commits" :key="item.created_at" v-show="!item.deleted_at">
+          <input type="text" :value="item.content" @input="setText(i, $event.target.value)">
+        </div>
+      </transition-group>
+    </div>
+    <div>
+      <button id="add" @click="add">Add</button>
+    </div>
+    <pre v-text="peer.open ? 'Open' : 'Offline'"></pre>
+    <pre v-text="peerID"></pre>
+    <pre v-text="connectionsJSON"></pre>
+    <pre v-text="commits"></pre>
+    <pre v-text="peerJSON" style="max-height: 20em;overflow: auto; opacity: .5"></pre>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.js"></script>
+  <script src="chunk-loader.js"></script>
+  <script src="peering.js"></script>
+  <script src="ls.js"></script>
+
+  <script>
+  const $root = new Vue({
+    el: '#app',
+    data () {
+      return {
+        connections: [],
+        peer: {},
+        peerKey: '0cja67kmi3qjv2t9',
+        peerID: ls('peerID'),
+        peerMax: 5,
+        commits: ls('commits') || []
+      }
+    },
+    computed: {
+      todo: {
+        get () {
+          return this.commits.slice().sort((a, b) => a.updated_at < b.updated_at).map(c => c.content)
+        },
+        set () {}
+      },
+      connectionsJSON () {
+        return this.connections.map(c => ({ id: c.id, peer: c.peer }))
+      },
+      peerJSON () {
+        function stringifier(key, value) {
+          if (typeof value === 'object' && value !== null) {
+            if (cache.indexOf(value) !== -1) {
+              // Circular reference found, discard key
+              return;
+            }
+            // Store value in our collection
+            cache.push(value);
+          }
+          return value;
+        }
+        var cache = []
+        return JSON.stringify(Object.assign({}, this.peer, { connections: null, _events: null }), stringifier, 2)
+      }
+    },
+    methods: {
+      add () {
+        console.log(this.commits.length)
+        this.commits.push({
+          content: '',
+          created_at: Date.now(),
+          deleted_at: null,
+          updated_at: Date.now(),
+        })
+      },
+      isEmptyCommit (i) {
+        return this.commits[i] && (
+          // Has no content
+          !this.commits[i].content ||
+          // Or is deleted and the one above it is has no content
+          this.commits[i].deleted_at && this.isEmptyCommit(i - 1)
+        )
+      },
+      setText (i, value) {
+        console.log('yo', i, value)
+        this.$set(this.commits, i, Object.assign(this.commits[i], {
+          content: value,
+          updated_at: Date.now()
+        }))
+        if (!value && this.isEmptyCommit(i - 1)) {
+          this.$set(this.commits, i, Object.assign(this.commits[i], {
+            deleted_at: Date.now()
+          }))
+        }
+        this.send([this.commits[i]])
+      },
+      sortCommits () {
+        this.commits = this.commits.slice().sort((a, b) => a.updated_at < b.updated_at)
+      },
+      optimize () {
+        this.commits = this.commits.filter(c => !c.deleted_at)
+      },
+
+      connect () {
+        this.send(this.commits)
+      },
+
+      send (data) {
+        this.connections = this.connections.filter(c => c.open)
+        this.connections.forEach(conn => {
+          conn.send(data || this.commits)
+        })
+        console.log('send', data)
+      },
+
+      receive (data) {
+        console.log('receive', data)
+        data.forEach(commit => {
+          const existingIndex = this.commits.findIndex(c => c.created_at === commit.created_at)
+          const existingCommit = this.commits[existingIndex]
+          console.log('commit', existingIndex, existingCommit)
+
+          // Update commits to newest version
+          if (existingIndex > -1 && commit.updated_at > existingCommit.updated_at) {
+            console.log('update')
+            this.$set(this.commits, existingIndex, commit)
+          }
+
+          // Add missing commit
+          if (!existingCommit && !commit.deleted_at) {
+            console.log('insert')
+
+            const before = this.commits.findIndex(c => c.created_at > commit.created_at)
+            if (before > -1) {
+              this.commits.splice(before, 0, commit)
+            } else {
+              this.commits.push(commit)
+            }
+          }
+        })
+      }
+    },
+    mounted () {
+      setTimeout(() => {
+        loadChunk('Peer', () => {
+          peering(this, {
+            connect: this.connect,
+            receive: this.receive
+          })
+        })
+      }, 2000)
+    },
+    watch: {
+      commits (val) {
+        ls('commits', val)
+      }
+    }
+  })
+  </script>
+</body>
