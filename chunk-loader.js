@@ -1,5 +1,5 @@
 const scripts = {
-  Peer: 'http://cdn.peerjs.com/0.3/peer.js'
+  Peer: '//cdnjs.cloudflare.com/ajax/libs/peerjs/0.3.14/peer.min.js'
 }
 const fetched = {}
 
