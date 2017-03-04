@@ -1,0 +1,188 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: segoe ui, helvetica neue, sans-serif;
+}
+
+[v-cloak] {
+  display: none;
+}
+#app {
+  max-width: 30rem;
+  margin: 0 auto;
+}
+
+/* Item */
+
+.items {
+  padding: 1rem 0;
+}
+.item {
+  position: relative;
+  transition: opacity .5s, margin .5s;
+}
+.item.checked {
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* Item > Checkmark */
+
+.check {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  padding: 5px;
+  height: 40px;
+  width: 40px;
+  cursor: pointer;
+}
+.check::before {
+  content: '';
+  display: block;
+  background: #666;
+  box-shadow: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  transform: scale(.15);
+  transition: transform .2s;
+}
+.item:hover .check::before {
+  background: #000;
+  transform: scale(.2);
+}
+.item .check:hover::before {
+  transform: scale(.6);
+}
+.checked .check::before {
+  transform: scale(.4);
+}
+.checked .check::before {
+  background: white;
+  box-shadow: 0 0 1px 1px #aaa;
+}
+.checked:hover .check::before {
+  background: white;
+  transform: scale(.4);
+}
+
+/* Item > Text input */
+
+.item>.inp-subtle {
+  display: block;
+  line-height: 20px;
+  padding: 10px 10px 10px 40px;
+}
+.item textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px #ccc;
+}
+
+/* Item > info */
+
+.item__info {
+  position: absolute;
+  bottom: -6px;
+  left: 40px;
+  font-size: 12px;
+  opacity: .5;
+}
+
+/* List transition */
+
+.list-enter-active {
+  transition: opacity .4s .2s, margin .4s;
+}
+.list-leave-active {
+  transition: opacity .4s, margin .4s .2s;
+}
+.list-enter,
+.list-leave-to {
+  opacity: 0;
+  margin: -20px 0;
+}
+
+/* Footer > sticky */
+
+html, body {
+  height: 100%;
+}
+#app {
+  position: relative;
+  min-height: 100%;
+  padding-bottom: 5rem;
+}
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Nav */
+
+nav {
+  display: flex;
+  margin: 0 auto;
+  max-width: 30rem;
+  background: white;
+}
+
+/* Nav > buttons */
+
+nav button {
+  border: none;
+  padding: 1rem;
+  text-align: left;
+  background: none;
+  cursor: pointer;
+  opacity: .5;
+}
+nav:hover button {
+  background: #eee;
+  opacity: 1;
+}
+nav button:hover {
+  background: #ddd;
+}
+nav button:focus {
+  background: #ccc;
+}
+button small {
+}
+button small+small::before {
+  content: ' · ';
+  margin: 0 3px;
+}
+
+/* Nav > settings button */
+
+.btn--settings {
+  padding-left: 40px;
+  flex-grow: 1
+}
+
+.form-group {
+  display: block;
+  margin: 0 -2rem;
+  padding: 1rem 2rem;
+}
+
+.form-group:hover {
+  background: #eee;
+}
+
+.form-group input[type=text] {
+  width: 100%;
+  padding: .5rem;
+}
+
+.checkbox input{
+  float: left;
+  width: auto;
+  margin-right: .5em;
+}

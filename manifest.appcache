@@ -1,0 +1,19 @@
+CACHE MANIFEST
+# v1 2017-03-04
+Modal.css
+Modal.js
+TextareaSubtle.css
+TextareaSubtle.js
+chunk-loader.js
+index.html
+ls.js
+peering.js
+synclist.css
+//cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.min.js
+//cdnjs.cloudflare.com/ajax/libs/peerjs/0.3.14/peer.min.js
+
+NETWORK:
+*
+
+FALLBACK:
+/ index.html

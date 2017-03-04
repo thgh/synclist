@@ -1,28 +1,10 @@
 function peering(state, hooks) {
-  heartBeat()
 
   if (!hooks.receive) {
     throw new Error('Must have receive hook')
   }
 
-  function heartBeat() {
-    if (!state.peer.open) {
-      console.log('create next')
-      createNextPeer()
-    }
-    setTimeout(heartBeat, 2000)
-  }
-
-  function sync() {
-    if (state.peer.connections) {
-      Object.values(state.peer.connections).forEach(conns => conns.forEach(conn => {
-        if (conn.open) {
-          console.log('sending to', conn.peer)
-          conn.send({ list: state.list })
-        }
-      }))
-    }
-  }
+  createNextPeer()
 
   function createNextPeer() {
     if (state.peer.open) {
@@ -35,8 +17,16 @@ function peering(state, hooks) {
     // Receive connection
     state.peer.on('connection', function(conn) {
       openHandler(conn, conn.peer)
-      sync()
     });
+    state.peer.on('error', function(err) {
+      switch (err.type) {
+        case 'peer-unavailable':
+          return
+        case 'unavailable-id':
+          setTimeout(createNextPeer, 500)
+      }
+      console.error('Peer error', err.type)
+    })
     state.peer.on('open', peerCreated)
   }
 
@@ -57,27 +47,12 @@ function peering(state, hooks) {
   }
 
   function openHandler(conn, id) {
-    console.log('My peer ID is: ', state.peerID, ' and I connected with', id, conn);
-
     state.connections.push(conn)
-
-    hooks.connect()
-
-    // Receive messages
-    console.log('ready to receive')
     conn.on('data', hooks.receive)
-    conn.on('close', function(data) {
-      // Remove closed connections
-      console.log('Connections', state.connections.length, state.connections.filter(c => c.open).length)
-      state.connections = state.connections.filter(c => c.open)
-    })
+    hooks.connect()
   }
 
   function errorHandler(err) {
     console.debug('error ', err);
-  }
-
-  return {
-    sync
   }
 }

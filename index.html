@@ -1,81 +1,154 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" manifest="manifest.appcache?">
 
 <head>
   <meta charset="utf-8">
   <title>synclist</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style type="text/css">
-    .item {
-      position: relative;
-      margin-right: 10px;
-      min-height: 30px;
-    }
-    .item pre {
-      position: absolute;
-      left: 200px;
-      top: 0;
-      white-space: normal;
-    }
-    .list-enter-active {
-      transition: opacity .5s .5s, margin .5s;
-    }
-    .list-leave-active {
-      transition: opacity .5s, margin .5s .5s;
-    }
-    .list-enter, .list-leave-to {
-      opacity: 0;
-      margin: -15px 0; 
-    }
-  </style>
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="mask-icon" href="./safari-pinned-tab.svg" color="#ffbb00">
+  <link rel="shortcut icon" href="./favicon.ico">
+  <meta name="msapplication-config" content="./browserconfig.xml">
+  <meta name="theme-color" content="#ffbb00">
+
+  <link rel="stylesheet" type="text/css" href="Modal.css">
+  <link rel="stylesheet" type="text/css" href="TextareaSubtle.css">
+  <link rel="stylesheet" type="text/css" href="synclist.css">
 </head>
 
 <body>
-  <div id="app">
-    <div id="items">
+  <div id="app" v-cloak>
+    <div class="items">
       <transition-group name="list">
-        <div class="item" v-for="(item, i) in commits" :key="item.created_at" v-show="!item.deleted_at">
-          <input type="text" :value="item.content" @input="setText(i, $event.target.value)">
+        <div
+          class="item"
+          :class="{ checked: item.checked_at }"
+          v-for="(item, i) in commits"
+          :key="item.created_at"
+          v-if="!item.deleted_at"
+        >
+          <div class="check" @click="toggle(i)"></div>
+          <textarea-subtle
+            :value="item.content"
+            placeholder="---"
+            @input="setText(i, $event)"
+            @enter="enter(i, $event)"
+            @remove="remove(i, $event)"
+            @tab="tab(i, $event)"
+          ></textarea-subtle>
+          <div class="item__info" v-if="show.info">
+            <span v-if="item.created_by">{{ item.created_by || '' }}</span>
+            <span v-if="item.created_by">{{ item.created_at | ago }}</span>
+            <span v-if="item.created_by && item.updated_by">&middot;</span>
+            <span v-if="item.updated_by">{{ item.updated_by || '' }}</span>
+            <span v-if="item.updated_by">{{ item.updated_at | ago }}</span>
+          </div>
         </div>
       </transition-group>
     </div>
-    <div>
-      <button id="add" @click="add">Add</button>
-    </div>
-    <pre v-text="peer.open ? 'Open' : 'Offline'"></pre>
-    <pre v-text="peerID"></pre>
-    <pre v-text="connectionsJSON"></pre>
-    <pre v-text="commits"></pre>
-    <pre v-text="peerJSON" style="max-height: 20em;overflow: auto; opacity: .5"></pre>
+
+    <footer>
+      <nav>
+        <button @click="show.nick = 1" class="btn--settings">
+          Settings
+          <div>
+            <small>{{ nick }}</small>
+            <small v-if="sync">sync</small>
+            <small v-if="show.info">info</small>
+          </div>
+        </button>
+        <button @click="show.debug = 1" v-if="show.info">debug</button>
+      </nav>
+    </footer>
+
+    <modal v-if="show.debug" @close="show.debug = false">
+      <h1 slot="header">Debug</h1>
+        <pre v-text="stats"></pre>
+      <div>
+        <table>
+          <thead>
+            <tr>
+              <th>peer</th>
+              <th>open</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="conn in connections">
+              <td v-text="conn.peer"></td>
+              <td v-text="conn.open"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre v-text="peer.open ? 'You are connected' : 'Offline'"></pre>
+        <pre v-text="peerID"></pre>
+        <pre v-text="connectionsJSON"></pre>
+        <pre v-text="commits" style="max-height: 20em;overflow: auto; opacity: .5"></pre>
+        <pre v-text="peerJSON" style="max-height: 20em;overflow: auto; opacity: .5"></pre>
+      </div>
+    </modal>
+
+    <modal v-if="show.nick" @close="show.nick = false">
+      <h2 slot="header">Settings</h2>
+      <label class="form-group">
+        <div>Device nickname</div>
+        <input type="text" v-model="nick">
+      </label>
+      <label class="form-group checkbox">
+        <input type="checkbox" v-model="sync">
+        <div>Sync with peers</div>
+      </label>
+      <label class="form-group checkbox">
+        <input type="checkbox" v-model="show.info">
+        <div>Show info about items</div>
+      </label>
+    </modal>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.min.js"></script>
   <script src="chunk-loader.js"></script>
   <script src="peering.js"></script>
   <script src="ls.js"></script>
+  <script src="Modal.js"></script>
+  <script src="TextareaSubtle.js"></script>
 
   <script>
   const $root = new Vue({
     el: '#app',
+    local: ['nick', 'peerID', 'commits', 'show', 'sync'],
     data () {
       return {
+        show: {
+          info: false,
+          nick: false,
+          debug: false
+        },
+        stats: {
+          deleted: 0,
+          inserted: 0,
+          pushed: 0,
+          received: 0,
+          updated: 0
+        },
+        sync: false,
+        nick: 'hi',
         connections: [],
         peer: {},
         peerKey: '0cja67kmi3qjv2t9',
-        peerID: ls('peerID'),
-        peerMax: 5,
-        commits: ls('commits') || []
+        peerID: 'default',
+        peerMax: 15,
+        commits: [createCommit('hi')]
       }
     },
     computed: {
-      todo: {
-        get () {
-          return this.commits.slice().sort((a, b) => a.updated_at < b.updated_at).map(c => c.content)
-        },
-        set () {}
+      visibleCommits () {
+        return this.commits.filter(c => !c.deleted_at)
       },
       connectionsJSON () {
-        return this.connections.map(c => ({ id: c.id, peer: c.peer }))
+        return this.connections.map(c => ({ id: c.id, peer: c.peer, open: c.open }))
       },
       peerJSON () {
         function stringifier(key, value) {
@@ -95,34 +168,100 @@
     },
     methods: {
       add () {
-        console.log(this.commits.length)
-        this.commits.push({
-          content: '',
-          created_at: Date.now(),
-          deleted_at: null,
-          updated_at: Date.now(),
-        })
+        this.commits.push(createCommit())
+      },
+      toggle (i) {
+        this.$set(this.commits, i, Object.assign(this.commits[i], {
+          checked_at: this.commits[i].checked_at ? null : Date.now(),
+          updated_by: this.nick,
+          updated_at: Date.now()
+        }))
+        this.send([this.commits[i]])
       },
       isEmptyCommit (i) {
         return this.commits[i] && (
           // Has no content
-          !this.commits[i].content ||
+          (!this.commits[i].deleted_at && !this.commits[i].content) ||
           // Or is deleted and the one above it is has no content
-          this.commits[i].deleted_at && this.isEmptyCommit(i - 1)
+          (this.commits[i].deleted_at && this.isEmptyCommit(i - 1))
         )
       },
       setText (i, value) {
-        console.log('yo', i, value)
         this.$set(this.commits, i, Object.assign(this.commits[i], {
           content: value,
+          updated_by: this.nick,
           updated_at: Date.now()
         }))
-        if (!value && this.isEmptyCommit(i - 1)) {
+        this.send([this.commits[i]])
+      },
+      enter (i, evt) {
+        evt.preventDefault()
+
+        // If next item is empty, tab to it
+        if (this.isEmptyCommit(i)) {
+          this.$nextTick(() => {
+            const next = evt.target.closest('.item').nextElementSibling
+            next && next.querySelector('textarea').focus()
+          })
+          return
+        }
+
+        const next = this.visibleCommits[this.visibleCommits.indexOf(this.commits[i]) + 1]
+        const created_at = next ? Math.ceil((this.commits[i].created_at + next.created_at) / 2) : Date.now()
+
+        // Insert empty item
+        this.commits.splice(i + 1, 0, {
+          content: '',
+          created_at: created_at,
+          created_by: this.nick,
+          deleted_at: null,
+          updated_at: Date.now(),
+          updated_by: this.nick,
+        })
+        this.send([this.commits[i + 1]])
+        if (evt) {
+          this.$nextTick(() => {
+            const next = evt.target.closest('.item').nextElementSibling
+            next && next.querySelector('textarea').focus()
+          })
+        }
+      },
+      remove (i, evt) {
+        if (!this.commits[i].content) {
           this.$set(this.commits, i, Object.assign(this.commits[i], {
             deleted_at: Date.now()
           }))
+          this.send([this.commits[i]])
+          if (evt.keyCode == 8) {
+            const previous = evt.target.closest('.item').previousElementSibling
+            previous && previous.querySelector('textarea').focus()
+          } else {
+            const next = evt.target.closest('.item').nextElementSibling
+            next && next.querySelector('textarea').focus()
+          }
+          evt.preventDefault()
         }
-        this.send([this.commits[i]])
+      },
+      tab (i, evt) {
+        // If it's the last item, create a new one
+        if (evt && !evt.shiftKey) {
+          if (this.visibleCommits[this.visibleCommits.length - 1].created_at === this.commits[i].created_at) {
+            this.commits.splice(i + 1, 0, {
+              content: '',
+              created_at: Date.now(),
+              created_by: this.nick,
+              deleted_at: null,
+              updated_by: this.nick,
+              updated_at: Date.now(),
+            })
+            this.send([this.commits[i], this.commits[i + 1]])
+            evt.preventDefault()
+            this.$nextTick(() => {
+              const next = evt.target.closest('.item').nextElementSibling
+              next && next.querySelector('textarea').focus()
+            })
+          }
+        }
       },
       sortCommits () {
         this.commits = this.commits.slice().sort((a, b) => a.updated_at < b.updated_at)
@@ -132,59 +271,147 @@
       },
 
       connect () {
+        console.debug('initial sync', this.commits.length)
         this.send(this.commits)
       },
 
-      send (data) {
-        this.connections = this.connections.filter(c => c.open)
+      send (data, tries, conn) {
+        tries = tries ? 1 : tries + 1
+        data = data.filter(c => c && c.created_at)
+
         this.connections.forEach(conn => {
-          conn.send(data || this.commits)
+          this.sendTo(data, conn, 0)
         })
-        console.log('send', data)
+      },
+
+      sendTo (data, conn, tries) {
+        tries++
+
+        if (conn.open) {
+          conn.send(data)
+        } else if (tries < 10) {
+          setTimeout(this.sendTo.bind(this, data, conn, tries), 500 * tries * tries)
+        } else {
+          this.connections.splice(this.connections.indexOf(conn), 1)
+        }
       },
 
       receive (data) {
-        console.log('receive', data)
+        if (!data.forEach) {
+          return console.warn('Received unexpected data', data)
+        } else {
+          this.stats.received += data.length
+        }
+
         data.forEach(commit => {
           const existingIndex = this.commits.findIndex(c => c.created_at === commit.created_at)
           const existingCommit = this.commits[existingIndex]
-          console.log('commit', existingIndex, existingCommit)
 
           // Update commits to newest version
           if (existingIndex > -1 && commit.updated_at > existingCommit.updated_at) {
-            console.log('update')
             this.$set(this.commits, existingIndex, commit)
+            this.stats.updated++
+          }
+
+          // Update commits to newest version
+          if (existingIndex > -1 && commit.deleted_at && !existingCommit.deleted_at) {
+            this.$set(this.commits, existingIndex, commit)
+            this.stats.deleted++
           }
 
           // Add missing commit
           if (!existingCommit && !commit.deleted_at) {
-            console.log('insert')
-
             const before = this.commits.findIndex(c => c.created_at > commit.created_at)
             if (before > -1) {
               this.commits.splice(before, 0, commit)
+              this.stats.inserted++
             } else {
               this.commits.push(commit)
+              this.stats.pushed++
             }
           }
         })
-      }
-    },
-    mounted () {
-      setTimeout(() => {
+      },
+
+      startPeering () {
+        if (this.peeringStarted) {
+          return
+        }
+        this.peeringStarted = true
         loadChunk('Peer', () => {
+          console.log('peering')
           peering(this, {
             connect: this.connect,
             receive: this.receive
           })
         })
-      }, 2000)
+      }
+    },
+    mounted () {
+      if (this.sync) {
+        this.startPeering()
+      }
+      if (!this.nick) {
+        this.show.nick = 1
+      }
     },
     watch: {
       commits (val) {
         ls('commits', val)
+      },
+      sync (val) {
+        if (val) {
+          this.startPeering()
+        } else {
+          this.peeringStarted = false
+        }
       }
+    },
+    filters: {
+      ago: timeago
     }
   })
+
+  function createCommit (nick) {
+    return {
+      content: '',
+      created_at: Date.now(),
+      created_by: nick,
+      deleted_at: null,
+      updated_at: Date.now(),
+      updated_by: nick,
+    }
+  }
+
+
+  function timeago (d) {
+    if (!d) {
+      return 'nooit'
+    }
+    if (typeof d === 'string') {
+      d = d.replace(' ', 'T')
+    }
+    d = new Date(d)
+    if (!d) {
+      console.error('Report invalid date')
+      return 'invalid'
+    }
+    const diff = new Date().valueOf() - d.valueOf()
+    if (diff > 1000 * 60 * 60 * 24) {
+      const MONTHS = 'jan,feb,maart,apr,mei,juni,juli,aug,sept,okt,nov,dec'.split(',')
+      return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + pad(d.getHours()) + ':' + pad(d.getSeconds())
+    }
+    if (diff > 1000 * 60 * 60) {
+      return Math.round(diff / 36e5) + ' uur ago'
+    }
+    if (diff > 1000 * 60) {
+      return Math.round(diff / 6e4) + ' min. ago'
+    }
+    return Math.round(diff / 1000) + ' s. ago'
+  }
+
+function pad (t) {
+  return t < 10 ? '0' + t : t
+}
   </script>
 </body>

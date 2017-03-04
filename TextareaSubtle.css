@@ -1,0 +1,29 @@
+.inp-subtle {
+  position: relative;
+  display: inline-block;
+  line-height: inherit;
+  flex-grow: 1;
+}
+.inp-subtle > textarea,
+.inp-subtle > input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: inherit;
+  padding: inherit;
+  font: inherit;
+  line-height: inherit;
+  background: none;
+  color: inherit;
+  overflow: hidden;
+  resize: none;
+}
+.inp-subtle-span {
+  min-width: 30px;
+  max-width: 100%;
+  flex-grow: 1;
+  color: transparent;
+  white-space: pre-wrap;
+}
