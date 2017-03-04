@@ -12,7 +12,7 @@ function peering(state, hooks) {
     }
     state.peerID = Math.floor(Math.random() * state.peerMax) + 1
 
-    console.log('creating new Peer', state.peerID)
+    console.debug('creating new Peer', state.peerID)
     state.peer = new Peer(state.peerID.toString(), { key: state.peerKey });
     // Receive connection
     state.peer.on('connection', function(conn) {
@@ -25,7 +25,7 @@ function peering(state, hooks) {
         case 'unavailable-id':
           setTimeout(createNextPeer, 500)
       }
-      console.error('Peer error', err.type)
+      console.debug('Peer error', err.type)
     })
     state.peer.on('open', peerCreated)
   }
@@ -53,6 +53,6 @@ function peering(state, hooks) {
   }
 
   function errorHandler(err) {
-    console.debug('error ', err);
+    console.debug('Peer error ', err);
   }
 }

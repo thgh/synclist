@@ -66,12 +66,12 @@
           Toggle sync
           <div>
             <small>Now {{
-              !peeringStarted ? 'offline' :
               peer.destroyed ? 'destroyed' :
               peer.disconnected ? 'disconnected' :
               actualPeers.length ? actualPeers.length + ' peers' :
               peer.connected ? 'connected' :
               peer.open ? 'ready' :
+              !peeringStarted ? 'offline' :
               peer.id ? 'connecting' : 'in trouble'
             }}</small>
           </div>
@@ -316,7 +316,7 @@
 
       receive (data) {
         if (!data.forEach) {
-          return console.warn('Received unexpected data', data)
+          return console.debug('Received unexpected data', data)
         } else {
           this.stats.received += data.length
         }
@@ -355,14 +355,23 @@
         if (this.peeringStarted) {
           return
         }
-        this.peeringStarted = true
-        loadChunk('Peer', () => {
-          console.log('peering')
+        if (this.peer.destroyed) {
+          this.peeringStarted = true
           peering(this, {
             connect: this.connect,
             receive: this.receive
           })
-        })
+        } else if (this.peer.disconnected) {
+          this.peer.reconnect()
+        } else {
+          this.peeringStarted = true
+          loadChunk('Peer', () => {
+            peering(this, {
+              connect: this.connect,
+              receive: this.receive
+            })
+          })
+        }
       }
     },
     mounted () {
@@ -381,7 +390,7 @@
         if (val) {
           this.startPeering()
         } else if (!this.peer.disconnected) {
-          this.peer.destroy()
+          this.peer.disconnect()
           setTimeout(() => {
             this.peeringStarted = 0
           }, 1000)
