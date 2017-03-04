@@ -62,6 +62,20 @@
           </div>
         </button>
         <button @click="show.debug = 1" v-if="show.info">debug</button>
+        <button @click="sync = !sync" class="btn--right">
+          Toggle sync
+          <div>
+            <small>Now {{
+              !peeringStarted ? 'offline' :
+              peer.destroyed ? 'destroyed' :
+              peer.disconnected ? 'disconnected' :
+              actualPeers.length ? actualPeers.length + ' peers' :
+              peer.connected ? 'connected' :
+              peer.open ? 'ready' :
+              peer.id ? 'connecting' : 'in trouble'
+            }}</small>
+          </div>
+        </button>
       </nav>
     </footer>
 
@@ -96,7 +110,7 @@
       <h2 slot="header">Settings</h2>
       <label class="form-group">
         <div>Device nickname</div>
-        <input type="text" v-model="nick">
+        <input type="text" v-model="nick" autofocus>
       </label>
       <label class="form-group checkbox">
         <input type="checkbox" v-model="sync">
@@ -134,6 +148,7 @@
           updated: 0
         },
         sync: false,
+        peeringStarted: false,
         nick: 'hi',
         connections: [],
         peer: {},
@@ -146,6 +161,9 @@
     computed: {
       visibleCommits () {
         return this.commits.filter(c => !c.deleted_at)
+      },
+      actualPeers () {
+        return this.connectionsJSON.filter(c => c.open)
       },
       connectionsJSON () {
         return this.connections.map(c => ({ id: c.id, peer: c.peer, open: c.open }))
@@ -351,7 +369,7 @@
       if (this.sync) {
         this.startPeering()
       }
-      if (!this.nick) {
+      if (this.nick === 'hi') {
         this.show.nick = 1
       }
     },
@@ -362,8 +380,11 @@
       sync (val) {
         if (val) {
           this.startPeering()
-        } else {
-          this.peeringStarted = false
+        } else if (!this.peer.disconnected) {
+          this.peer.destroy()
+          setTimeout(() => {
+            this.peeringStarted = 0
+          }, 1000)
         }
       }
     },

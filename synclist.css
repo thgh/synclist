@@ -162,8 +162,11 @@ button small+small::before {
 /* Nav > settings button */
 
 .btn--settings {
-  padding-left: 40px;
   flex-grow: 1
+}
+
+.btn--right {
+  text-align: right;
 }
 
 .form-group {

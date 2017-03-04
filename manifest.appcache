@@ -4,13 +4,18 @@ Modal.css
 Modal.js
 TextareaSubtle.css
 TextareaSubtle.js
+apple-touch-icon.png
 chunk-loader.js
+favicon-16x16.png
+favicon-32x32.png
+favicon.ico
 index.html
 ls.js
+manifest.json
 peering.js
 synclist.css
-//cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.min.js
 //cdnjs.cloudflare.com/ajax/libs/peerjs/0.3.14/peer.min.js
+//cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.min.js
 
 NETWORK:
 *
