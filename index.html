@@ -65,10 +65,10 @@
         <button @click="sync = !sync" class="btn--right">
           Toggle sync
           <div>
-            <small>Now {{
+            <small>{{
               peer.destroyed ? 'destroyed' :
               peer.disconnected ? 'disconnected' :
-              actualPeers.length ? actualPeers.length + ' peers' :
+              actualPeers.length ? actualPeers.length + ' peer' + (actualPeers.length > 1 ? 's' : '') :
               peer.connected ? 'connected' :
               peer.open ? 'ready' :
               !peeringStarted ? 'offline' :
@@ -163,7 +163,7 @@
         return this.commits.filter(c => !c.deleted_at)
       },
       actualPeers () {
-        return this.connectionsJSON.filter(c => c.open)
+        return this.connectionsJSON.map(c => c.open).filter(Boolean).filter(onlyUnique)
       },
       connectionsJSON () {
         return this.connections.map(c => ({ id: c.id, peer: c.peer, open: c.open }))
@@ -440,8 +440,11 @@
     return Math.round(diff / 1000) + ' s. ago'
   }
 
-function pad (t) {
-  return t < 10 ? '0' + t : t
-}
+  function pad (t) {
+    return t < 10 ? '0' + t : t
+  }
+  function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
+  }
   </script>
 </body>
