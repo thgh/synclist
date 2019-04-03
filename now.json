@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "name": "synclist",
+  "alias": ["list.thomasg.be", "synclist"],
+  "regions": ["bru"],
+  "builds": [
+    {
+      "src": "now-stub.js",
+      "use": "now-sapper"
+    }
+  ],
+  "routes": [{ "src": "/(.*)", "dest": "now-stub.js" }]
+}

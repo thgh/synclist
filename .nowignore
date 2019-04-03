@@ -1,0 +1,14 @@
+*
+!now-stub.js
+!static
+!static/
+!__sapper__
+!__sapper__/
+!__sapper__/*
+!__sapper__/build
+!__sapper__/build/
+!__sapper__/build/*
+!__sapper__/build/**
+!__sapper__/build/**/*
+!__sapper__/build/index.js
+__sapper__/dev
