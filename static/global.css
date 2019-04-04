@@ -1,36 +1,215 @@
+* {
+  box-sizing: border-box;
+}
 body {
-	margin: 0;
-	font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-	font-size: 14px;
-	line-height: 1.5;
-	color: #333;
+  margin: 0;
+  font-family: segoe ui, helvetica neue, sans-serif;
 }
 
-h1, h2, h3, h4, h5, h6 {
-	margin: 0 0 0.5em 0;
-	font-weight: 400;
-	line-height: 1.2;
+[v-cloak] {
+  display: none;
+}
+#app {
+  max-width: 30rem;
+  margin: 0 auto;
 }
 
-h1 {
-	font-size: 2em;
+/* List */
+
+.lists {
+  z-index: 3;
+  position: sticky;
+  top: 0;
+  display: flex;
+  max-width: 100%;
+  overflow: auto;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+.list {
+  display: block;
+}
+.list>.inp-subtle {
+  display: block;
+  line-height: 20px;
+  padding: 10px 20px;
+}
+.list--other {
+  line-height: 20px;
+  padding: 10px 20px;
+  opacity: .5;
 }
 
-a {
-	color: inherit;
+/* Item */
+
+.items {
+  padding: .5rem 0;
+}
+.item {
+  position: relative;
+  transition: opacity .5s, margin .5s;
+}
+.item.checked {
+  color: #999;
+  text-decoration: line-through;
 }
 
-code {
-	font-family: menlo, inconsolata, monospace;
-	font-size: calc(1em - 2px);
-	color: #555;
-	background-color: #f0f0f0;
-	padding: 0.2em 0.4em;
-	border-radius: 2px;
+/* Item > Checkmark */
+
+.check {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 5px;
+  height: 40px;
+  width: 40px;
+  cursor: pointer;
+  background: none;
+  appearance: none;
+  outline: none;
+}
+.check::before {
+  content: '';
+  display: block;
+  margin: 5px auto;
+  border: 2px solid black;
+  box-shadow: none;
+  border-radius: 4px;
+  width: 12px;
+  height: 12px;
+  opacity: .5;
+  transition: opacity .2s, background .2s, transform .2s;
+}
+.item:hover .check::before {
+}
+.item .check:hover::before {
+  transform: scale(1.25);
+}
+.checked .check::before {
+  background: black;
+  opacity: .2;
+}
+.checked .check:hover::before {
 }
 
-@media (min-width: 400px) {
-	body {
-		font-size: 16px;
-	}
+/* Item > info */
+
+.item__info {
+  position: absolute;
+  bottom: -6px;
+  left: 40px;
+  font-size: 12px;
+  opacity: .5;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Item > links */
+
+.item__link {
+  margin-bottom: 1em;
+  color: blue;
+}
+
+/* List transition */
+
+.list-enter-active {
+  transition: opacity .4s .2s, margin .4s;
+}
+.list-leave-active {
+  transition: opacity .4s, margin .4s .2s;
+}
+.list-enter,
+.list-leave-to {
+  opacity: 0;
+  margin: -20px 0;
+}
+
+/* Footer > sticky */
+
+html, body {
+  height: 100%;
+}
+#app {
+  position: relative;
+  min-height: 100%;
+  padding-bottom: 5rem;
+}
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Nav */
+
+nav {
+  display: flex;
+  margin: 0 auto;
+  max-width: 30rem;
+  background: white;
+}
+
+/* Nav > buttons */
+
+nav button {
+  border: none;
+  padding: 1rem;
+  text-align: left;
+  background: none;
+  cursor: pointer;
+  opacity: .5;
+}
+nav:hover button {
+  background: #eee;
+  opacity: 1;
+}
+nav button:hover {
+  background: #ddd;
+}
+nav button:focus {
+  background: #ccc;
+}
+button small {
+}
+button small+small::before {
+  content: ' · ';
+  margin: 0 3px;
+}
+
+/* Nav > settings button */
+
+.btn--settings {
+  flex-grow: 1
+}
+
+.btn--right {
+  text-align: right;
+}
+
+.form-group {
+  display: block;
+  margin: 0 -2rem;
+  padding: 1rem 2rem;
+}
+
+.form-group:hover {
+  background: #eee;
+}
+
+.form-group input[type=text] {
+  width: 100%;
+  padding: .5rem;
+}
+
+.checkbox input{
+  float: left;
+  width: auto;
+  margin-right: .5em;
 }

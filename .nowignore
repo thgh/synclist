@@ -2,6 +2,9 @@
 !now-stub.js
 !static
 !static/
+!static/*
+!static/**
+!static/**/*
 !__sapper__
 !__sapper__/
 !__sapper__/*
