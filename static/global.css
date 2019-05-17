@@ -1,9 +1,20 @@
+:root {
+  --fg: #fff;
+  --fgShadow: rgba(255, 255, 255, .1);
+  --bg: #000;
+  --border: #444;
+  --bgModal: #222;
+  --bgHover: #333;
+}
+
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
   font-family: segoe ui, helvetica neue, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 [v-cloak] {
@@ -12,6 +23,16 @@ body {
 #app {
   max-width: 30rem;
   margin: 0 auto;
+}
+
+/* Standard button */
+
+.btn {
+  border: none;
+  background: none;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 /* List */
@@ -23,11 +44,20 @@ body {
   display: flex;
   max-width: 100%;
   overflow: auto;
-  background: white;
-  border-bottom: 1px solid #ddd;
+  background: var(--bg);
 }
 .list {
   display: block;
+  line-height: 2em;
+  padding: 2em .5em 0;
+  opacity: .5;
+  vertical-align: bottom;
+}
+.list.current {
+  font-size: 2em;
+  font-weight: bold;
+  padding-top: 0;
+  opacity: 1;
 }
 .list>.inp-subtle {
   display: block;
@@ -90,7 +120,7 @@ body {
   transform: scale(1.25);
 }
 .checked .check::before {
-  background: black;
+  background: var(--fg);
   opacity: .2;
 }
 .checked .check:hover::before {
@@ -99,9 +129,20 @@ body {
 /* Item > info */
 
 .item__info {
-  position: absolute;
-  bottom: -6px;
-  left: 40px;
+  padding-left: 40px;
+  font-size: 12px;
+  opacity: .5;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Item > shop */
+
+.item__shop {
+  margin-top: -10px;
+  margin-bottom: 0px;
+  padding-left: 40px;
   font-size: 12px;
   opacity: .5;
   pointer-events: none;
@@ -111,9 +152,21 @@ body {
 
 /* Item > links */
 
-.item__link {
-  margin-bottom: 1em;
+.item__suggestions {
+  position: absolute;
+  z-index: 6;
+  left: 40px;
+  box-shadow: 0 0 10px var(--fgShadow);
   color: blue;
+  background: var(--bgModal);
+}
+.btn-sug {
+  padding: .8em;
+  outline: none;
+  font-size: 14px;
+}
+.btn-sug:hover {
+  background: var(--bgHover);
 }
 
 /* List transition */
@@ -141,10 +194,14 @@ html, body {
   padding-bottom: 5rem;
 }
 footer {
-  position: absolute;
+  position: fixed;
+  z-index: 3;
   bottom: 0;
   left: 0;
   right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg);
+  box-shadow: 0 0 10px var(--fgShadow);
 }
 
 /* Nav */
@@ -153,12 +210,12 @@ nav {
   display: flex;
   margin: 0 auto;
   max-width: 30rem;
-  background: white;
+  background: var(--bg);
 }
 
 /* Nav > buttons */
 
-nav button {
+nav .btn {
   border: none;
   padding: 1rem;
   text-align: left;
@@ -166,19 +223,19 @@ nav button {
   cursor: pointer;
   opacity: .5;
 }
-nav:hover button {
-  background: #eee;
+nav:hover .btn {
+  background: var(--fgShadow);
   opacity: 1;
 }
-nav button:hover {
-  background: #ddd;
+nav .btn:hover {
+  background: var(--fgShadow);
 }
-nav button:focus {
-  background: #ccc;
+nav .btn:focus {
+  background: var(--fgShadow);
 }
-button small {
+.btn small {
 }
-button small+small::before {
+.btn small+small::before {
   content: ' · ';
   margin: 0 3px;
 }

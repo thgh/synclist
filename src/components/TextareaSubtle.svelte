@@ -1,13 +1,11 @@
-<label class="inp-subtle">
-  <span class="inp-subtle-span">{value || placeholder}.</span>
-  <textarea
+<label class="inp-subtle"><span class="inp-subtle-span inherit">{value || placeholder}.</span><textarea
+    class="inherit"
     value={value}
     placeholder="{placeholder}"
     on:keydown={keydown}
     on:focus={() => dispatch('focus')}
     on:input={evt => dispatch('input', evt.target.value)}
-  ></textarea>
-</label>
+  ></textarea></label>
 
 <script>
   import { createEventDispatcher } from 'svelte'
@@ -36,6 +34,8 @@
   display: inline-block;
   line-height: inherit;
   flex-grow: 1;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 .inp-subtle > textarea {
   position: absolute;
@@ -43,10 +43,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  border: inherit;
-  padding: inherit;
-  font: inherit;
-  line-height: inherit;
   background: none;
   color: inherit;
   overflow: hidden;
@@ -57,7 +53,14 @@
   max-width: 100%;
   flex-grow: 1;
   color: transparent;
-  white-space: pre-wrap;
+}
+.inherit {
+  border: inherit;
+  padding: inherit;
+  font: inherit;
+  line-height: inherit;
+  white-space: inherit;
+  overflow-wrap: inherit;
 }
 
 /* Item > Text input */
@@ -69,6 +72,6 @@
 }
 :global(.item) textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 1px #ccc;
+  box-shadow: 0 0 0 1px var(--bgHover);
 }
 </style>

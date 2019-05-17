@@ -4,6 +4,7 @@ import { get, writable } from 'svelte/store'
 export const nick = writableLocal('nick', 'anonymous')
 export const peerID = writableLocal('peerID', null)
 export const commits = writableRoom('commits', ()=>{}, [createCommit('no')])
+export const sortField = writableLocal('sortField', '')
 export const showDebug = writableLocal('showDebug', false)
 export const sync = writableLocal('sync', false)
 
@@ -20,6 +21,7 @@ function splice (store) {
   function createCommit(nick) {
     return {
       content: '',
+      sortKey: Math.random() * Number.MAX_SAFE_INTEGER,
       createdAt: Date.now(),
       createdBy: nick,
       deletedAt: null,

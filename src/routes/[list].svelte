@@ -4,10 +4,13 @@
   <title>synclist</title>
 </svelte:head>
 
-{#if $page.query.list}
+{#if $page.params.list}
 <div class="lists">
+  <div class="list current">
+    {$page.params.list}
+  </div>
   <div class="list">
-    {$page.query.list}
+    Other
   </div>
 </div>
 {/if}
@@ -18,6 +21,7 @@
       class="item"
       class:checked={item.checkedAt}
       class:focused={focused === item}
+      transition:slide="{{ duration: 300 }}"
     >
       <button class="check" on:click|preventDefault={() => toggle(item)} tabindex="-1"></button>
       <TextareaSubtle
@@ -28,6 +32,18 @@
         on:keydown="{evt => keydown(item, evt.detail)}"
         @tab="tab(i, $event)"
       ></TextareaSubtle>
+      {#if focused === item && !entityKeys.includes(focused.content) && suggestions.length}
+        <div class="item__suggestions">
+          {#each suggestions as sug}
+            <button class="btn btn-sug" tabindex="-1" on:click={() => setText(item, sug.item.key)}>{@html sug.disp}</button>
+          {/each}
+        </div>
+      {/if}
+      {#if shopLookup[item.content]}
+        <div class="item__shop">
+          <span>{shopLookup[item.content].name}</span>
+        </div>
+      {/if}
       {#if $showDebug}
         <div class="item__info">
           <span v-if="item.createdBy">{ item.createdBy || '' }</span>
@@ -37,41 +53,29 @@
           <span v-if="item.updatedBy">{ timeago(item.updatedAt) }</span>
         </div>
       {/if}
-      {#if focused === item}
-        <div class="item__link">
-          {#each suggestions as sug}
-            <button tabindex="-1" on:click={() => setText(item, sug.item.key)}>{@html sug.disp}</button>
-          {/each}
-          {#if !suggestions.length}
-            suggestions
-          {/if}
-        </div>
-      {/if}
     </div>
   {/each}
 </div>
 
 <footer>
   <nav>
-    <button @click="modalNick = 1" class="btn--settings">
+    <a href="/settings" class="btn btn--settings">
       Settings
       <div>
         <small>{ $nick }</small>
-        <small v-if="sync">sync</small>
-        <small v-if="$showDebug">info</small>
+        {#if $sync}
+          <small>sync</small>
+        {/if}
+        {#if $showDebug}
+          <small>info</small>
+        {/if}
       </div>
-    </button>
-    <button @click="modalDebug = 1" v-if="$showDebug">debug</button>
-    <button @click="sync = !sync" class="btn--right">
-      Toggle sync
+    </a>
+    <button class="btn" on:click={() => $showDebug = !$showDebug}>debug</button>
+    <button class="btn btn--right" on:click={() => $sortField = $sortField === 'shop' ? '' : 'shop'}>
+      Sort
       <div>
-        <small
-          >{ peer.destroyed ? 'destroyed' : peer.disconnected ? 'disconnected'
-          : actualPeers.length ? actualPeers.length + ' peer' +
-          (actualPeers.length > 1 ? 's' : '') : peer.connected ? 'connected' :
-          peer.open ? 'ready' : !peeringStarted ? 'offline' : peer.id ?
-          'connecting' : 'in trouble' }</small
-        >
+        <small>{$sortField || 'default'}</small>
       </div>
     </button>
   </nav>
@@ -80,59 +84,39 @@
 {#if false}
 <modal v-if="modalDebug" @close="modalDebug = false">
   <h1>Debug</h1>
-  <pre v-text="stats"></pre>
-  <div>
-    <table>
-      <thead>
-        <tr>
-          <th>peer</th>
-          <th>open</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="conn in connections">
-          <td v-text="conn.peer"></td>
-          <td v-text="conn.open"></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <pre v-text="peer.open ? 'You are connected' : 'Offline'"></pre>
-    <pre v-text="peerID"></pre>
-    <pre v-text="connectionsJSON"></pre>
-    <pre
-      v-text="commits"
-      style="max-height: 20em;overflow: auto; opacity: .5"
-    ></pre>
-    <pre
-      v-text="peerJSON"
-      style="max-height: 20em;overflow: auto; opacity: .5"
-    ></pre>
-  </div>
 </modal>
 
 <modal v-if="modalNick" @close="modalNick = false">
-  <h2>Settings</h2>
-  <label class="form-group">
-    <div>Device nickname</div>
-    <input type="text" bind:value="{$nick}" />
-  </label>
-  <label class="form-group checkbox">
-    <input type="checkbox" bind:checked="{$sync}" />
-    <div>Sync with peers</div>
-  </label>
-  <label class="form-group checkbox">
-    <input type="checkbox" bind:checked="{$showDebug}" />
-    <div>Show info about items</div>
-  </label>
 </modal>
 {/if}
 
+<script context=module>
+  function pad(t) {
+    return t < 10 ? '0' + t : t
+  }
+
+  function onlyUnique(value, index, self) {
+    return self.indexOf(value) === index
+  }
+
+  function sortBy(arr, field, alt) {
+    return arr.slice().sort((a, b) => {
+      return (a[field] || a[alt]) < (b[field] || b[alt])
+        ? -1
+        : (a[field] || a[alt]) === (b[field] || b[alt])
+        ? 0
+        : 1
+    })
+  }
+</script>
 <script>
   import { tick } from 'svelte';
+  import { slide } from 'svelte/transition';
+
   import { page } from '@sapper/app'
-  import { nick, sync, showDebug, commits } from '../lib/store.js'
-  import { entities, suggest } from '../lib/entities.js'
+  import { nick, sync, showDebug, sortField, commits } from '../lib/store.js'
+  import { shopLookup } from '../lib/shops.js'
+  import { entityKeys, suggest } from '../lib/entities.js'
 
   import TextareaSubtle from '../components/TextareaSubtle.svelte'
 
@@ -143,7 +127,7 @@
   const actualPeers = []
   const peer = {}
 
-  $: items = sortBy(sortBy($commits, 'sortAfter'), 'createdAt')
+  $: items = sortBy($commits.map(enrich), $sortField || 'sortKey')
   $: visibleItems = items.filter(item => !item.deletedAt)
   $: suggestions = focused && items ? suggest(focused) : []
 
@@ -155,9 +139,15 @@
     }))
   }
 
+  function enrich (item) {
+    const found = shopLookup[item.content]
+    item.shop = found ? found.key : ''
+    return item
+  }
 
   async function keydown (item, evt) {
     console.log('keydown', item, evt)
+    // Enter
     if (evt.which === 13) {
       evt.preventDefault()
 
@@ -169,13 +159,15 @@
       //   // })
       //   return
       // }
-
-      const createdAt = Date.now()
+      console.log('ind', visibleItems.indexOf(item), visibleItems)
+      const next = visibleItems[visibleItems.indexOf(item) + 1]
+      const nextSort = next && next.sortKey || Number.MAX_SAFE_INTEGER
+      console.log('next', next)
 
       // Insert empty item
       commits.set({
         content: '',
-        sortAfter: item.createdAt,
+        sortKey: ((item.sortKey || 0) + nextSort) / 2,
         createdAt: Date.now(),
         createdBy: $nick,
         deletedAt: null,
@@ -188,6 +180,7 @@
         next && next.querySelector('textarea').focus()
       }
     } else if (evt.which === 8) {
+      // Delete
 
       if (!item.content) {
         evt.preventDefault()
@@ -267,22 +260,5 @@
       return Math.round(diff / 6e4) + ' min. ago'
     }
     return Math.round(diff / 1000) + ' s. ago'
-  }
-
-  function pad(t) {
-    return t < 10 ? '0' + t : t
-  }
-  function onlyUnique(value, index, self) {
-    return self.indexOf(value) === index
-  }
-
-  function sortBy(arr, field, alt) {
-    return arr.slice().sort((a, b) => {
-      return (a[field] || a[alt]) < (b[field] || b[alt])
-        ? -1
-        : (a[field] || a[alt]) === (b[field] || b[alt])
-        ? 0
-        : 1
-    })
   }
 </script>
