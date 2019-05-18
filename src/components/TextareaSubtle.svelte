@@ -44,6 +44,7 @@
   width: 100%;
   height: 100%;
   background: none;
+  padding: inherit;
   color: inherit;
   overflow: hidden;
   resize: none;
@@ -56,7 +57,6 @@
 }
 .inherit {
   border: inherit;
-  padding: inherit;
   font: inherit;
   line-height: inherit;
   white-space: inherit;

@@ -1,12 +1,23 @@
 :root {
   --fg: #fff;
   --fgShadow: rgba(255, 255, 255, .1);
+  --fgChecked: rgba(255, 255, 255, .5);
   --bg: #000;
   --border: #444;
   --bgModal: #222;
   --bgHover: #333;
 }
-
+/*
+:root {
+  --fg: #000;
+  --fgShadow: rgba(0, 0, 0, .1);
+  --fgChecked: rgba(0, 0, 0, .1);
+  --bg: #fff;
+  --border: #ccc;
+  --bgModal: #eee;
+  --bgHover: #ddd;
+}
+*/
 * {
   box-sizing: border-box;
 }
@@ -41,22 +52,25 @@ body {
   z-index: 3;
   position: sticky;
   top: 0;
-  display: flex;
   max-width: 100%;
-  overflow: auto;
   background: var(--bg);
 }
 .list {
-  display: block;
-  line-height: 2em;
-  padding: 2em .5em 0;
+  display: inline-block;
+  line-height: 1em;
+  padding: 2em 1rem 0;
   opacity: .5;
-  vertical-align: bottom;
+  color: inherit;
+  text-decoration: none;
+}
+.list:hover {
+  opacity: 1;
 }
 .list.current {
   font-size: 2em;
   font-weight: bold;
   padding-top: 0;
+  padding-left: 40px;
   opacity: 1;
 }
 .list>.inp-subtle {
@@ -80,7 +94,7 @@ body {
   transition: opacity .5s, margin .5s;
 }
 .item.checked {
-  color: #999;
+  color: var(--fgChecked);
   text-decoration: line-through;
 }
 
@@ -106,7 +120,7 @@ body {
   content: '';
   display: block;
   margin: 5px auto;
-  border: 2px solid black;
+  border: 2px solid var(--fg);
   box-shadow: none;
   border-radius: 4px;
   width: 12px;
@@ -121,7 +135,7 @@ body {
 }
 .checked .check::before {
   background: var(--fg);
-  opacity: .2;
+  opacity: .1;
 }
 .checked .check:hover::before {
 }
@@ -257,7 +271,7 @@ nav .btn:focus {
 }
 
 .form-group:hover {
-  background: #eee;
+  background: var(--bgHover);
 }
 
 .form-group input[type=text] {

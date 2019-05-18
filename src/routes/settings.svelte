@@ -29,7 +29,7 @@
 
 <footer>
   <nav>
-    <a href="/" class="btn btn--settings">
+    <a href={$page.query.back || '/'} class="btn btn--settings">
       Back
       <br><small>to list</small>
     </a>
@@ -37,5 +37,7 @@
 </footer>
 
 <script>
+  import { page } from '@sapper/app'
+
   import { nick, sync, showDebug, commits } from '../lib/store.js'
 </script>

@@ -9,9 +9,12 @@
   <div class="list current">
     {$page.params.list}
   </div>
-  <div class="list">
-    Other
-  </div>
+  <a href="/ingredients" class="list">
+    ingredients
+  </a>
+  <a href="/ideas" class="list">
+    ideas
+  </a>
 </div>
 {/if}
 
@@ -59,7 +62,7 @@
 
 <footer>
   <nav>
-    <a href="/settings" class="btn btn--settings">
+    <a href="/settings?back={$page.path}" class="btn btn--settings">
       Settings
       <div>
         <small>{ $nick }</small>
