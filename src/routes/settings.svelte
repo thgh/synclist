@@ -7,12 +7,6 @@
   <div>Device nickname</div>
   <input type="text" bind:value="{$nick}" />
 </label>
-<!--
-<label class="form-group checkbox">
-  <input type="checkbox" bind:checked="{$sync}" />
-  <div>Sync with peers</div>
-</label>
--->
 <label class="form-group checkbox">
   <input type="checkbox" bind:checked="{$showDebug}" />
   <div>Show info about items</div>

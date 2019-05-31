@@ -17,12 +17,10 @@ const options = {
   distance: 100,
   maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: [
-    "key"
-  ]
-};
+  keys: ['key']
+}
 
-export const fuzzy = new Fuse(entities, options);
+export const fuzzy = new Fuse(entities, options)
 
 export function suggest(focused) {
   const results = fuzzy.search(focused.content).slice(0, 5)
@@ -33,7 +31,12 @@ export function suggest(focused) {
       const match = r.matches[m]
       for (var i = match.indices.length - 1; i >= 0; i--) {
         const [start, end] = match.indices[i]
-        key = key.slice(0, start) + '<b>' + key.slice(start, end + 1) + '</b>' + key.slice(end + 1)
+        key =
+          key.slice(0, start) +
+          '<b>' +
+          key.slice(start, end + 1) +
+          '</b>' +
+          key.slice(end + 1)
       }
     }
     r.disp = key

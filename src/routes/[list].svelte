@@ -97,19 +97,25 @@
 {/if}
 
 <script context="module">
-  export function preload ({ params }) {
-    const lists = [{
-      id: 'item',
-      title: 'Items'
-    }, {
-      id: 'menu',
-      title: 'Menu'
-    }, {
-      id: 'todo',
-      title: 'Ideas'
-    }]
+  export function preload({ params }) {
+    const lists = [
+      {
+        id: 'item',
+        title: 'Items'
+      },
+      {
+        id: 'menu',
+        title: 'Menu'
+      },
+      {
+        id: 'todo',
+        title: 'Ideas'
+      }
+    ]
     console.log('be')
-    const list = lists.find(f => f.id === params.list || f.title === params.list)
+    const list = lists.find(
+      f => f.id === params.list || f.title === params.list
+    )
     console.log('aftes', list, params.list)
     if (!list) {
       return this.redirect(302, '/' + lists[0].id)
@@ -131,7 +137,10 @@
   function sortBy(arr, field, alt) {
     if (field === 'shop') {
       arr.forEach(item => {
-        item.shop = shopLookup[item.content] && shopLookup[item.content].key || item.shop || 'a'
+        item.shop =
+          (shopLookup[item.content] && shopLookup[item.content].key) ||
+          item.shop ||
+          'a'
       })
     }
     return arr.slice().sort((a, b) => {
@@ -144,34 +153,45 @@
   }
 </script>
 <script>
-  import { tick } from 'svelte';
-  import { slide } from 'svelte/transition';
+  import { tick } from 'svelte'
+  import { slide } from 'svelte/transition'
   import { serialize } from '../lib/url.js'
 
   import { page, goto } from '@sapper/app'
-  import { nick, sync, showDebug, sortField, commits, createCommit } from '../lib/store.js'
+  import {
+    nick,
+    sync,
+    showDebug,
+    sortField,
+    commits,
+    createCommit
+  } from '../lib/store.js'
   import { shopLookup } from '../lib/shops.js'
   import { entityKeys, suggest } from '../lib/entities.js'
 
   import TextareaSubtle from '../components/TextareaSubtle.svelte'
 
-  export let list = {id:1,title:'no'}
+  export let list = { id: 1, title: 'no' }
   export let lists
   let focused = null
-  let modalDebug=false
-  let modalNick=false
+  let modalDebug = false
+  let modalNick = false
   const peeringStarted = 'not'
   const actualPeers = []
   const peer = {}
 
-  $: filteredItems = $commits.filter(c => (!list.id || list.id === 'item' ? !c.list || c.list === 'item' : c.list === list.id))
+  $: filteredItems = $commits.filter(c =>
+    !list.id || list.id === 'item'
+      ? !c.list || c.list === 'item'
+      : c.list === list.id
+  )
   $: sortedItems = sortBy(filteredItems, $sortField || 'sortKey')
   $: visibleItems = sortedItems.filter(item => !item.deletedAt)
   $: suggestions = focused && visibleItems ? suggest(focused) : []
   $: otherLists = lists.filter(a => a.id !== $page.params.list)
   $: manifest = serialize({ list: $page.params.list })
 
-  function setText (item, content) {
+  function setText(item, content) {
     const updates = {
       content,
       updatedBy: $nick,
@@ -185,7 +205,7 @@
     commits.set(Object.assign({}, item, updates))
   }
 
-  function blurItem (item) {
+  function blurItem(item) {
     // if ((list.id !== 'menu') === item.content.split(" ").length > 2) {
     //   goto(list.id === 'menu' ? 'item' : 'menu')
     //   .then(() => {
@@ -200,7 +220,7 @@
   //   return item
   // }
 
-  async function keydown (item, evt) {
+  async function keydown(item, evt) {
     console.log('keydown', item, evt)
     // Enter
     if (evt.which === 13) {
@@ -216,22 +236,22 @@
       // }
       console.log('ind', visibleItems.indexOf(item), visibleItems)
       const next = visibleItems[visibleItems.indexOf(item) + 1]
-      const nextSort = next && next.sortKey || Number.MAX_SAFE_INTEGER
+      const nextSort = (next && next.sortKey) || Number.MAX_SAFE_INTEGER
       console.log('next', next)
 
       // Insert empty item
       commits.set({
         content: '',
         list: list.id,
-        sortKey: ((item.sortKey || 0) + nextSort) / 2,
+        sortKey: ((item.sortKey || 0) + nextSort) / 2,
         createdAt: Date.now(),
         createdBy: $nick,
         deletedAt: null,
         updatedAt: Date.now(),
-        updatedBy: $nick,
+        updatedBy: $nick
       })
       if (evt) {
-        await tick();
+        await tick()
         if ($sortField === 'shop') {
           const next = evt.target.closest('.items').lastElementChild
           next && next.querySelector('textarea').focus()
@@ -262,15 +282,17 @@
     }
   }
 
-  function toggle (item) {
-    commits.set(Object.assign({}, item, {
-      checkedAt: item.checkedAt ? null : Date.now(),
-      updatedBy: $nick,
-      updatedAt: Date.now()
-    }))
+  function toggle(item) {
+    commits.set(
+      Object.assign({}, item, {
+        checkedAt: item.checkedAt ? null : Date.now(),
+        updatedBy: $nick,
+        updatedAt: Date.now()
+      })
+    )
   }
 
-  function focusItem (item) {
+  function focusItem(item) {
     focused = item
   }
 
