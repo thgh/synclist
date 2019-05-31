@@ -7,13 +7,20 @@
   <div>Device nickname</div>
   <input type="text" bind:value="{$nick}" />
 </label>
+<!--
 <label class="form-group checkbox">
   <input type="checkbox" bind:checked="{$sync}" />
   <div>Sync with peers</div>
 </label>
+-->
 <label class="form-group checkbox">
   <input type="checkbox" bind:checked="{$showDebug}" />
   <div>Show info about items</div>
+</label>
+<label class="form-group">
+  <div>Theme</div>
+  <button on:click={() => theme.set('dark')}>dark</button>
+  <button on:click={() => theme.set('light')}>light</button>
 </label>
 
 <h2>Debug</h2>
@@ -39,5 +46,5 @@
 <script>
   import { page } from '@sapper/app'
 
-  import { nick, sync, showDebug, commits } from '../lib/store.js'
+  import { nick, sync, showDebug, commits, theme } from '../lib/store.js'
 </script>

@@ -3,14 +3,14 @@ import { get, writable } from 'svelte/store'
 
 export const nick = writableLocal('nick', 'anonymous')
 export const peerID = writableLocal('peerID', null)
-export const commits = writableRoom('commits', ()=>{}, [createCommit('no')])
+export const commits = writableRoom('commits', () => {}, [createCommit('no')])
 export const sortField = writableLocal('sortField', '')
 export const showDebug = writableLocal('showDebug', false)
 export const sync = writableLocal('sync', false)
 
 commits.splice = splice(commits)
 
-function splice (store) {
+function splice(store) {
   return (i, sub, item) => {
     const v = get(store)
     v.splice(i, sub, item)
@@ -18,17 +18,23 @@ function splice (store) {
   }
 }
 
-  function createCommit(nick) {
-    return {
-      content: '',
-      sortKey: Math.random() * Number.MAX_SAFE_INTEGER,
-      createdAt: Date.now(),
-      createdBy: nick,
-      deletedAt: null,
-      updatedAt: Date.now(),
-      updatedBy: nick
-    }
+export const theme = writableLocal('theme', 'dark')
+if (process.browser) {
+  theme.subscribe(val => (document.body.className = val || 'dark'))
+}
+
+export function createCommit(nick, data = {}) {
+  return {
+    content: '',
+    sortKey: 0,
+    createdAt: Date.now(),
+    createdBy: nick,
+    deletedAt: null,
+    updatedAt: Date.now(),
+    updatedBy: nick,
+    ...data
   }
+}
 
 export function writableLocal(key, value, update) {
   if (process.browser && window.localStorage[key]) {
@@ -36,7 +42,7 @@ export function writableLocal(key, value, update) {
   }
   const { set, subscribe } = writable(value, update)
   return {
-    set (v) {
+    set(v) {
       ls(key, v)
       set(v)
     },
@@ -44,11 +50,14 @@ export function writableLocal(key, value, update) {
   }
 }
 
-function validCommit (item) {
+function validCommit(item) {
+  if (item.deletedAt && item.deletedAt < Date.now() - 1000 * 3600 * 24 * 7) {
+    return false
+  }
   return item.createdAt && item.updatedAt
 }
 
-export function writableRoom (key, update, value = []) {
+export function writableRoom(key, update, value = []) {
   if (process.browser && window.localStorage[key]) {
     value = ls(key).filter(validCommit)
   }
@@ -77,7 +86,7 @@ export function writableRoom (key, update, value = []) {
       .then(upsert)
   }
 
-  function upsert (data) {
+  function upsert(data) {
     let dirty = []
     if (data['@graph']) {
       data = data['@graph']
@@ -104,7 +113,7 @@ export function writableRoom (key, update, value = []) {
   }
 
   return {
-    set (v) {
+    set(v) {
       const updates = upsert(v)
       process.browser && room.send(v)
 
@@ -115,7 +124,7 @@ export function writableRoom (key, update, value = []) {
         fetch(item['@id'], {
           method: 'PUT',
           redirect: 'follow',
-          headers: { accept: 'application/json', Authorization: 'insecure'},
+          headers: { accept: 'application/json', Authorization: 'insecure' },
           body: JSON.stringify(item)
         })
       })

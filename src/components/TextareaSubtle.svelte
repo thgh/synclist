@@ -5,6 +5,7 @@
     on:keydown={keydown}
     on:focus={() => dispatch('focus')}
     on:input={evt => dispatch('input', evt.target.value)}
+    on:blur={evt => dispatch('blur', evt.target.value)}
   ></textarea></label>
 
 <script>

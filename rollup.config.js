@@ -12,6 +12,8 @@ const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
 const legacy = !!process.env.SAPPER_LEGACY_BUILD;
 
+const now = false
+
 export default {
 	client: {
 		input: config.client.input(),
@@ -60,7 +62,7 @@ export default {
 				'process.browser': false,
 				'process.env.NODE_ENV': JSON.stringify(mode)
 			}),
-			json(),
+			now && json(),
 			svelte({
 				generate: 'ssr',
 				dev
@@ -69,6 +71,7 @@ export default {
 			commonjs()
 		],
 		external: [].concat(
+			now ? [] : Object.keys(pkg.dependencies),
 			require('module').builtinModules || Object.keys(process.binding('natives'))
 		),
 	},

@@ -1,26 +1,23 @@
-<style></style>
-
 <svelte:head>
-  <title>synclist</title>
+  <title>{list.title || $page.params.list} - Synclist</title>
+  <link rel="manifest" href="manifest.json?{manifest}" />
 </svelte:head>
 
-{#if $page.params.list}
+{#if list}
 <div class="lists">
   <div class="list current">
-    {$page.params.list}
+    {list.title}
   </div>
-  <a href="/ingredients" class="list">
-    ingredients
-  </a>
-  <a href="/ideas" class="list">
-    ideas
-  </a>
+  {#each otherLists as other}
+    <a href="/{other.id}" class="list">{other.title}</a>
+  {/each}
 </div>
 {/if}
 
 <div class="items">
   {#each visibleItems as item (item.createdAt)}
     <div
+      id="a{item.createdAt}"
       class="item"
       class:checked={item.checkedAt}
       class:focused={focused === item}
@@ -34,17 +31,18 @@
         on:input="{evt => setText(item, evt.detail)}"
         on:keydown="{evt => keydown(item, evt.detail)}"
         @tab="tab(i, $event)"
+        on:blur={() => blurItem(item)}
       ></TextareaSubtle>
-      {#if focused === item && !entityKeys.includes(focused.content) && suggestions.length}
+      {#if focused && focused.createdAt === item.createdAt && item.updatedBy === $nick && !entityKeys.includes(focused.content) && suggestions.length}
         <div class="item__suggestions">
           {#each suggestions as sug}
             <button class="btn btn-sug" tabindex="-1" on:click={() => setText(item, sug.item.key)}>{@html sug.disp}</button>
           {/each}
         </div>
       {/if}
-      {#if shopLookup[item.content]}
+      {#if item.shopName}
         <div class="item__shop">
-          <span>{shopLookup[item.content].name}</span>
+          <span>{item.shopName}</span>
         </div>
       {/if}
       {#if $showDebug}
@@ -59,6 +57,11 @@
     </div>
   {/each}
 </div>
+{#if !visibleItems.length}
+  <div>
+    <button on:click={() => commits.set(createCommit($nick, { list: list.id }))}>add</button>
+  </div>
+{/if}
 
 <footer>
   <nav>
@@ -93,7 +96,30 @@
 </modal>
 {/if}
 
-<script context=module>
+<script context="module">
+  export function preload ({ params }) {
+    const lists = [{
+      id: 'item',
+      title: 'Items'
+    }, {
+      id: 'menu',
+      title: 'Menu'
+    }, {
+      id: 'todo',
+      title: 'Ideas'
+    }]
+    console.log('be')
+    const list = lists.find(f => f.id === params.list || f.title === params.list)
+    console.log('aftes', list, params.list)
+    if (!list) {
+      return this.redirect(302, '/' + lists[0].id)
+    }
+    console.log(list, lists)
+    return {
+      list,
+      lists
+    }
+  }
   function pad(t) {
     return t < 10 ? '0' + t : t
   }
@@ -103,6 +129,11 @@
   }
 
   function sortBy(arr, field, alt) {
+    if (field === 'shop') {
+      arr.forEach(item => {
+        item.shop = shopLookup[item.content] && shopLookup[item.content].key || item.shop || 'a'
+      })
+    }
     return arr.slice().sort((a, b) => {
       return (a[field] || a[alt]) < (b[field] || b[alt])
         ? -1
@@ -115,14 +146,17 @@
 <script>
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition';
+  import { serialize } from '../lib/url.js'
 
-  import { page } from '@sapper/app'
-  import { nick, sync, showDebug, sortField, commits } from '../lib/store.js'
+  import { page, goto } from '@sapper/app'
+  import { nick, sync, showDebug, sortField, commits, createCommit } from '../lib/store.js'
   import { shopLookup } from '../lib/shops.js'
   import { entityKeys, suggest } from '../lib/entities.js'
 
   import TextareaSubtle from '../components/TextareaSubtle.svelte'
 
+  export let list = {id:1,title:'no'}
+  export let lists
   let focused = null
   let modalDebug=false
   let modalNick=false
@@ -130,23 +164,41 @@
   const actualPeers = []
   const peer = {}
 
-  $: items = sortBy($commits.map(enrich), $sortField || 'sortKey')
-  $: visibleItems = items.filter(item => !item.deletedAt)
-  $: suggestions = focused && items ? suggest(focused) : []
+  $: filteredItems = $commits.filter(c => (!list.id || list.id === 'item' ? !c.list || c.list === 'item' : c.list === list.id))
+  $: sortedItems = sortBy(filteredItems, $sortField || 'sortKey')
+  $: visibleItems = sortedItems.filter(item => !item.deletedAt)
+  $: suggestions = focused && visibleItems ? suggest(focused) : []
+  $: otherLists = lists.filter(a => a.id !== $page.params.list)
+  $: manifest = serialize({ list: $page.params.list })
 
   function setText (item, content) {
-    commits.set(Object.assign({}, item, {
+    const updates = {
       content,
       updatedBy: $nick,
       updatedAt: Date.now()
-    }))
+    }
+    const shop = shopLookup[content]
+    if (shop) {
+      updates.shop = shop.key
+      updates.shopName = shop.name
+    }
+    commits.set(Object.assign({}, item, updates))
   }
 
-  function enrich (item) {
-    const found = shopLookup[item.content]
-    item.shop = found ? found.key : ''
-    return item
+  function blurItem (item) {
+    // if ((list.id !== 'menu') === item.content.split(" ").length > 2) {
+    //   goto(list.id === 'menu' ? 'item' : 'menu')
+    //   .then(() => {
+    //     focused && document.querySelector('#a' + focused.createdAt + ' textarea').focus()
+    //   })
+    // }
   }
+
+  // function enrich (item) {
+  //   const found = shopLookup[item.content]
+  //   item.shop = found ? found.key : ''
+  //   return item
+  // }
 
   async function keydown (item, evt) {
     console.log('keydown', item, evt)
@@ -170,6 +222,7 @@
       // Insert empty item
       commits.set({
         content: '',
+        list: list.id,
         sortKey: ((item.sortKey || 0) + nextSort) / 2,
         createdAt: Date.now(),
         createdBy: $nick,
@@ -179,8 +232,13 @@
       })
       if (evt) {
         await tick();
-        const next = evt.target.closest('.item').nextElementSibling
-        next && next.querySelector('textarea').focus()
+        if ($sortField === 'shop') {
+          const next = evt.target.closest('.items').lastElementChild
+          next && next.querySelector('textarea').focus()
+        } else {
+          const next = evt.target.closest('.item').nextElementSibling
+          next && next.querySelector('textarea').focus()
+        }
       }
     } else if (evt.which === 8) {
       // Delete
@@ -217,17 +275,6 @@
   }
 
   // Helpers
-
-  function createCommit(nick) {
-    return {
-      content: '',
-      createdAt: Date.now(),
-      createdBy: nick,
-      deletedAt: null,
-      updatedAt: Date.now(),
-      updatedBy: nick
-    }
-  }
 
   function timeago(d) {
     if (!d) {
