@@ -12,7 +12,10 @@ const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
 const legacy = !!process.env.SAPPER_LEGACY_BUILD;
 
-const now = false
+const now = process.env.NOW_REGION
+if (now) {
+	console.log('Building for Now!')
+}
 
 export default {
 	client: {

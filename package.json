@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "sapper dev --open",
-    "now": "sapper build && sleep 1 && now --target production",
+    "now": "NOW_REGION=bru sapper build && sleep 1 && now --target production",
     "b": "sapper build",
     "export": "sapper export",
     "start": "node __sapper__/build",
